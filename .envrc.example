@@ -1,0 +1,7 @@
+# direnv용 예시 — 복사: cp .envrc.example .envrc 후 값 입력
+# Supabase 대시보드 Settings → API 에서 Project URL / anon public 키 확인
+
+export NUXT_PUBLIC_PROJECT_NAME=
+export NUXT_PUBLIC_NAVER_MAP_CLIENT_ID=
+export NUXT_PUBLIC_SUPABASE_URL=
+export NUXT_PUBLIC_SUPABASE_ANON_KEY=

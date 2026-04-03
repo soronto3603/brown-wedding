@@ -1,0 +1,17 @@
+# Nuxt
+.nuxt
+.output
+.data
+dist
+node_modules
+
+# Logs
+*.log
+
+# Env (로컬 비밀 — direnv)
+.env
+.env.*
+.envrc
+
+# OS
+.DS_Store

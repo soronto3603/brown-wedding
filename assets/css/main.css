@@ -1,0 +1,50 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* WEDDiC 브랜드 — CSS 변수 (전역·미디어쿼리에서 참조 가능) */
+:root {
+  --weddic-primary: #f2728a;
+  --weddic-primary-mid: #e85c78;
+  --weddic-primary-dark: #c9325a;
+  --weddic-primary-lt: #fff0f3;
+  --weddic-primary-soft: #ffd6e0;
+  --weddic-dark: #2a1520;
+  --weddic-text: #1a1a1a;
+  --weddic-muted: #9b9b9b;
+  --weddic-border: #ffd6e0;
+}
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family:
+    'Pretendard',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+body {
+  background: var(--weddic-primary-lt);
+  color: var(--weddic-text);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--weddic-primary) 35%, transparent);
+  border-radius: 2px;
+}

@@ -1,0 +1,30 @@
+---
+description: WEDDiC 브랜드 컬러·아이콘 — UI/스타일 작업 시 준수
+alwaysApply: true
+---
+
+# WEDDiC 브랜드 (웨딕)
+
+## 컬러 팔레트 (HEX 고정)
+
+| 토큰 | HEX | 용도 |
+|------|-----|------|
+| Primary | `#F2728A` | 메인 버튼, 활성 탭, 링크·강조 |
+| Primary Mid | `#E85C78` | 호버, 세컨더리 강조 |
+| Primary Dark | `#C9325A` | 투톤·강한 액센트, 경고성 강조 아님 |
+| Primary Light (surface) | `#FFF0F3` | 페이지/카드 배경 톤 |
+| Primary Soft | `#FFD6E0` | 칩, 보더, 비활성 배경 |
+| Dark BG | `#2A1520` | 다크 배너·모달 배경 톤 (필요 시) |
+
+예산 등 **금액 의미**는 기존 `GOLD` / `GOLD_LT` 유지 가능.
+
+## 구현 규칙
+
+- Vue/TS에서는 **`useThemeColors()`** (`composables/useThemeColors.ts`)만 사용한다. 임의의 파란 `#5B7BF5`·인디고 그라데이션 등 **이전 팔레트 색은 쓰지 않는다.**
+- 전역 CSS 변수는 **`assets/css/main.css`** 의 `:root` (`--weddic-*`)를 따른다.
+- **앱 마크**는 `public/weddic-icon.svg` (W + 하트) 단일 에셋을 쓴다. 사이드바·로그인 모달 등에서 텍스트 `W` 박스로 대체하지 않는다.
+
+## 아이콘
+
+- 경로: `/weddic-icon.svg` (Nuxt `public/`)
+- Favicon·앱 아이콘으로 동일 SVG 사용 가능
