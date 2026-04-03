@@ -1,0 +1,9 @@
+# https://nuxt.com/deploy/netlify — Nitro는 NETLIFY 빌드에서 `dist`·함수 번들을 생성합니다.
+# Netlify UI에서 Publish directory 를 수동 지정했다면 반드시 `dist` 와 일치시키세요.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

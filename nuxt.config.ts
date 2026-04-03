@@ -22,9 +22,13 @@ export default defineNuxtConfig({
   routeRules: {
     '/confirm': { ssr: false },
   },
-  /** Vercel 등 Node 서버리스 배포 시 권장 (로컬은 영향 없음) */
+  /** 배포 타깃별 Nitro 프리셋 (로컬은 기본 node-server) */
   nitro: {
-    preset: process.env.VERCEL ? 'vercel' : undefined,
+    preset: process.env.VERCEL
+      ? 'vercel'
+      : process.env.NETLIFY
+        ? 'netlify'
+        : undefined,
   },
   runtimeConfig: {
     public: {

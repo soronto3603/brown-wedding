@@ -9,6 +9,7 @@ const route = useRoute()
 const router = useRouter()
 
 const session = useSupabaseSession()
+const supabase = useSupabaseClient()
 const {
   openAuthModal,
   openAuthModalForTab,
@@ -40,7 +41,17 @@ watch(session, (s) => {
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
+  if (!import.meta.client) return
+
+  /** Supabase OAuth(PKCE)가 Site URL 루트로 `?code=` 붙여 리다이렉트하는 경우 */
+  if (route.query.code) {
+    await supabase.auth.getSession()
+    const q = { ...route.query } as Record<string, string | string[] | null | undefined>
+    delete q.code
+    await router.replace({ path: '/', query: q })
+  }
+
   const q = route.query.tab
   if (typeof q === 'string' && isTabKey(q)) {
     tab.value = q
