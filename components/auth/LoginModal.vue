@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { isTabKey } from "~/data/wedding";
+
 const { isOpen, closeAuthModal, clearPendingTab, pendingTabAfterLogin } =
   useAuthModal();
 const supabase = useSupabaseClient();
 const session = useSupabaseSession();
+const router = useRouter();
 
 const loading = ref(false);
 const errorMsg = ref("");
@@ -53,15 +56,26 @@ function onLater() {
   closeAuthModal();
 }
 
+/**
+ * Supabase/Kakao OAuth는 redirectTo에 절대 URL이 필요합니다.
+ * 경로는 앱 내부 라우트(`/confirm`)만 쓰고, 호스트는 `window.location.origin`으로 맞춥니다.
+ */
+function oauthRedirectUrl(): string {
+  const next = pendingTabAfterLogin.value;
+  const query: Record<string, string> = {};
+  if (next != null && isTabKey(next)) {
+    query.tab = next;
+  }
+  const resolved = router.resolve({ path: "/confirm", query });
+  return new URL(resolved.fullPath, window.location.origin).href;
+}
+
 async function onKakao() {
   if (!import.meta.client) return;
   errorMsg.value = "";
   loading.value = true;
   try {
-    const next = pendingTabAfterLogin.value;
-    const redirectTo = next
-      ? `${window.location.origin}/confirm?tab=${encodeURIComponent(next)}`
-      : `${window.location.origin}/confirm`;
+    const redirectTo = oauthRedirectUrl();
     /** 카카오 개발자 콘솔 동의 항목과 동일: 닉네임·프로필 사진만 (공백 구분) */
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
