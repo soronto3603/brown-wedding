@@ -2,8 +2,6 @@
 import type { TabKey } from '~/data/wedding'
 import { AUTH_REQUIRED_TABS, isTabKey, SIDE_MENUS } from '~/data/wedding'
 
-const { PRIMARY_LT, BORDER } = useThemeColors()
-
 const tab = ref<TabKey>('hall')
 const route = useRoute()
 const router = useRouter()
@@ -62,87 +60,90 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    :style="{
-      background: PRIMARY_LT,
-      display: 'flex',
-      height: '100vh',
-      overflow: 'hidden',
-    }"
-  >
-    <div
-      :style="{
-        width: '56px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        borderRight: `1px solid ${BORDER}`,
-        background: '#fff',
-        flexShrink: 0,
-        zIndex: 10,
-        paddingTop: '8px',
-      }"
-    >
-      <img
-        src="/weddic-icon.svg"
-        width="36"
-        height="36"
-        alt="WEDDiC"
-        :style="{
-          width: '36px',
-          height: '36px',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          marginBottom: '6px',
-          display: 'block',
-          objectFit: 'cover',
-        }"
-        @click="tab = 'hall'"
-      />
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="sidebar-logo" @click="tab = 'hall'">
+        <img
+          src="/weddic-icon.svg"
+          width="32"
+          height="32"
+          alt="WEDDiC"
+        />
+      </div>
 
-      <LayoutSideBtn
-        v-for="m in SIDE_MENUS"
-        :key="m.key"
-        :icon="m.icon"
-        :label="m.label"
-        :active="tab === m.key"
-        @click="onSelectTab(m.key)"
-      />
-    </div>
+      <div class="sidebar-menus">
+        <LayoutSideBtn
+          v-for="m in SIDE_MENUS"
+          :key="m.key"
+          :icon="m.icon"
+          :label="m.label"
+          :active="tab === m.key"
+          @click="onSelectTab(m.key)"
+        />
+      </div>
 
-    <div
-      :style="{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        minHeight: 0,
-      }"
-    >
+      <ClientOnly>
+        <DevPanel />
+      </ClientOnly>
+    </nav>
+
+    <main class="app-main">
       <HallPage v-if="tab === 'hall'" />
       <LoungePage v-else-if="tab === 'lounge'" />
       <BudgetPage v-else-if="tab === 'budget'" />
       <DictPage v-else-if="tab === 'dict'" />
       <MusicPage v-else-if="tab === 'music'" />
-      <div
-        v-else-if="tab === 'profile'"
-        :style="{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          gap: '8px',
-          color: '#9B9B9B',
-          fontSize: '14px',
-        }"
-      >
-        <template v-if="session?.user">
-          <span :style="{ color: '#1a1a1a', fontWeight: 600 }">마이 프로필</span>
-          <span>{{ session.user.email ?? session.user.phone ?? '연결됨' }}</span>
-        </template>
-        <template v-else> 로그인이 필요해요 </template>
-      </div>
-    </div>
+      <ProfilePage v-else-if="tab === 'profile'" />
+    </main>
   </div>
 </template>
+
+<style scoped>
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--weddic-bg-section);
+}
+
+.sidebar {
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border-right: 1px solid var(--weddic-border);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  padding: 14px 0 8px;
+  cursor: pointer;
+}
+
+.sidebar-logo img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+}
+
+.sidebar-menus {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+</style>

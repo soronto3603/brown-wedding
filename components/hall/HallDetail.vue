@@ -26,6 +26,7 @@ defineEmits<{
 }>()
 
 const { fetchHallDetail, fetchRegionAvgFoodMid } = useHallDetail()
+const { bookmarkedIds, myHallIds, toggleBookmark } = useBookmark()
 
 const detail = ref<HallDetailRow | null>(null)
 const loadError = ref<string | null>(null)
@@ -111,12 +112,21 @@ function sourceBadgeCount(link: string | null | undefined): number {
   return labelsFromSourceLink(link).length
 }
 
+const isBookmarked = computed(() =>
+  typeof props.hall.id === 'string' ? bookmarkedIds.value.has(props.hall.id) : false,
+)
+const isMyHall = computed(() =>
+  typeof props.hall.id === 'string' ? myHallIds.value.has(props.hall.id) : false,
+)
+
 function onBookmarkClick() {
   if (!user.value) {
     openAuthModal()
     return
   }
-  // TODO: bw_bookmarks wishlist 토글
+  if (typeof props.hall.id === 'string') {
+    toggleBookmark(props.hall.id, 'wishlist')
+  }
 }
 
 function onMyHallClick() {
@@ -124,7 +134,9 @@ function onMyHallClick() {
     openAuthModal()
     return
   }
-  // TODO: bw_bookmarks my_hall 토글
+  if (typeof props.hall.id === 'string') {
+    toggleBookmark(props.hall.id, 'my_hall')
+  }
 }
 
 const showEstimate = computed(
@@ -198,16 +210,16 @@ const showSourcesSection = computed(() => sources.value.length > 0)
       <span :style="{ cursor: 'pointer' }" @click="$emit('back')">← 목록으로</span>
       <div :style="{ display: 'flex', gap: '12px', alignItems: 'center' }">
         <span
-          :style="{ fontSize: '18px', cursor: 'pointer', color: MUTED }"
+          :style="{ fontSize: '18px', cursor: 'pointer', color: isBookmarked ? '#E05B5B' : MUTED, transition: 'color 0.15s' }"
           title="관심홀"
           @click="onBookmarkClick"
-          >♡</span
+          >{{ isBookmarked ? '♥' : '♡' }}</span
         >
         <span
-          :style="{ fontSize: '18px', cursor: 'pointer', color: MUTED }"
+          :style="{ fontSize: '18px', cursor: 'pointer', color: isMyHall ? '#C4A059' : MUTED, transition: 'color 0.15s' }"
           title="나의홀"
           @click="onMyHallClick"
-          >☆</span
+          >{{ isMyHall ? '★' : '☆' }}</span
         >
       </div>
     </div>
