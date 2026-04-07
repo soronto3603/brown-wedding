@@ -262,11 +262,9 @@ onUnmounted(() => {
       class="hall-main-row"
       :style="{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }"
     >
-      <Transition name="hall-aside">
-        <div v-if="selected" class="hall-aside-panel">
-          <HallDetail :hall="selected" @back="selected = null" />
-        </div>
-      </Transition>
+      <div v-if="selected" class="hall-aside-panel">
+        <HallDetail :hall="selected" @back="selected = null" />
+      </div>
 
       <HallMapView
         :halls="filtered"
@@ -283,41 +281,15 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* 지도는 항상 행 전체 너비 유지 → 패널은 위에 겹쳐 슬라이드 (레이아웃 덜컹거림 완화) */
+/* 패널: flex 아이템으로 지도를 밀어냄 — 지도 컨테이너가 패널 뒤에 깔리지 않음 */
 .hall-aside-panel {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 6;
   width: 390px;
-  max-width: min(390px, 100%);
+  max-width: min(390px, 50%);
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid v-bind('BORDER');
   background: #fff;
   overflow: hidden;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.07);
-}
-
-.hall-aside-enter-active {
-  transition:
-    transform 0.42s cubic-bezier(0.33, 1, 0.68, 1),
-    opacity 0.38s ease;
-}
-.hall-aside-leave-active {
-  transition:
-    transform 0.34s cubic-bezier(0.4, 0, 1, 1),
-    opacity 0.28s ease;
-}
-.hall-aside-enter-from,
-.hall-aside-leave-to {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-.hall-aside-enter-to,
-.hall-aside-leave-from {
-  transform: translateX(0);
-  opacity: 1;
 }
 </style>

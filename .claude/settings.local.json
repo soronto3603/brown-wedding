@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(winget --version)",
+      "Bash(choco --version)",
+      "Bash(winget install:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 816 //F)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//c/Program Files/nodejs/**)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm run:*)",
+      "Bash(where node:*)",
+      "Bash(where npm:*)",
+      "Bash(taskkill //PID 20444 //F)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(taskkill //PID 9016 //F)"
+    ]
+  }
+}

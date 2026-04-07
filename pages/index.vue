@@ -81,6 +81,10 @@ onMounted(async () => {
           @click="onSelectTab(m.key)"
         />
       </div>
+
+      <ClientOnly>
+        <DevPanel />
+      </ClientOnly>
     </nav>
 
     <main class="app-main">
