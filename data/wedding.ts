@@ -349,14 +349,14 @@ export function isTabKey(s: string): s is TabKey {
   return (TAB_KEYS as string[]).includes(s)
 }
 
-/** 로그인 없이 열면 로그인 모달을 띄우는 사이드 탭 */
-export const AUTH_REQUIRED_TABS = new Set<TabKey>(['profile', 'lounge', 'budget'])
+/** 탭 자체를 열 때 로그인 모달을 띄우는 탭 (프로필만) */
+export const AUTH_REQUIRED_TABS = new Set<TabKey>(['profile'])
 
 export const SIDE_MENUS: { key: TabKey; icon: string; label: string }[] = [
-  { key: 'hall', icon: '🏠', label: '홀지도' },
-  { key: 'lounge', icon: '👥', label: '대기실' },
-  { key: 'budget', icon: '📋', label: '우리예산' },
-  { key: 'dict', icon: '📖', label: '용어사전' },
-  { key: 'music', icon: '🎵', label: '선곡기' },
-  { key: 'profile', icon: '👤', label: '프로필' },
+  { key: 'hall', icon: 'hall', label: '홀지도' },
+  { key: 'lounge', icon: 'lounge', label: '대기실' },
+  { key: 'budget', icon: 'budget', label: '우리예산' },
+  { key: 'dict', icon: 'dict', label: '용어사전' },
+  { key: 'music', icon: 'music', label: '선곡기' },
+  { key: 'profile', icon: 'profile', label: '프로필' },
 ]

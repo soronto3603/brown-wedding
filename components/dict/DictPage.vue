@@ -1,25 +1,19 @@
 <script setup lang="ts">
-import { DICT } from '~/data/wedding'
-
-const { PRIMARY, PRIMARY_LT, GOLD, GOLD_LT, TEXT, MUTED, BORDER } = useThemeColors()
+const { PRIMARY_LT, TEXT, MUTED, BORDER } = useThemeColors()
+const { entries, loading, fetchGlossary, categories, search } = useGlossary()
 
 const q = ref('')
 const cat = ref('전체')
 const open = ref<number | null>(null)
-const cats = ['전체', '준비단계', '예식장', '스드메', '예물·예단', '음식', '비용']
 
-const filtered = computed(() =>
-  DICT.filter(
-    (d) =>
-      (cat.value === '전체' || d.cat === cat.value) &&
-      (!q.value || d.term.includes(q.value) || d.def.includes(q.value)),
-  ),
-)
+onMounted(() => fetchGlossary())
+
+const filtered = computed(() => search(q.value, cat.value))
 </script>
 
 <template>
-  <div :style="{ background: '#FAFAFA', height: '100%', overflowY: 'auto' }">
-    <div :style="{ maxWidth: '600px', margin: '0 auto', padding: '24px 16px' }">
+  <div class="page-wrap">
+    <div class="page-inner">
       <div
         :style="{
           display: 'flex',
@@ -28,6 +22,7 @@ const filtered = computed(() =>
           background: '#fff',
           overflow: 'hidden',
           marginBottom: '12px',
+          boxShadow: 'var(--weddic-card-shadow)',
         }"
       >
         <input
@@ -44,50 +39,26 @@ const filtered = computed(() =>
             background: 'transparent',
           }"
         />
-        <button
-          type="button"
-          :style="{
-            padding: '0 20px',
-            background: PRIMARY,
-            border: 'none',
-            color: '#fff',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }"
-        >
-          검색
-        </button>
+        <button type="button" class="btn-primary" :style="{ borderRadius: 0 }">검색</button>
       </div>
       <div :style="{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }">
         <button
-          v-for="c in cats"
+          v-for="c in categories"
           :key="c"
           type="button"
-          :style="{
-            fontFamily: 'inherit',
-            fontSize: '12px',
-            fontWeight: cat === c ? 600 : 400,
-            padding: '5px 14px',
-            borderRadius: '99px',
-            border: `1px solid ${cat === c ? PRIMARY : BORDER}`,
-            background: cat === c ? PRIMARY : '#fff',
-            color: cat === c ? '#fff' : MUTED,
-            cursor: 'pointer',
-          }"
+          :class="['pill', { active: cat === c }]"
+          :style="{ fontSize: '12px', padding: '5px 14px' }"
           @click="cat = c"
         >
           {{ c }}
         </button>
       </div>
-      <div
-        :style="{
-          background: '#fff',
-          border: `1px solid ${BORDER}`,
-          borderRadius: '12px',
-          overflow: 'hidden',
-        }"
-      >
+
+      <div v-if="loading" :style="{ textAlign: 'center', padding: '40px 0', color: MUTED }">
+        불러오는 중...
+      </div>
+
+      <div v-else class="card" :style="{ overflow: 'hidden' }">
         <div
           v-if="filtered.length === 0"
           :style="{ padding: '32px', textAlign: 'center', color: MUTED, fontSize: '14px' }"
@@ -96,12 +67,13 @@ const filtered = computed(() =>
         </div>
         <div
           v-for="(d, i) in filtered"
-          :key="i"
+          :key="d.id"
           :style="{
             padding: '13px 14px',
             borderBottom: i < filtered.length - 1 ? `1px solid ${BORDER}` : 'none',
             cursor: 'pointer',
             background: open === i ? PRIMARY_LT : '#fff',
+            transition: 'background 0.15s ease',
           }"
           @click="open = open === i ? null : i"
         >
@@ -114,18 +86,7 @@ const filtered = computed(() =>
             }"
           >
             <span :style="{ fontSize: '14px', fontWeight: 600, color: TEXT }">{{ d.term }}</span>
-            <span
-              :style="{
-                fontSize: '11px',
-                padding: '2px 8px',
-                borderRadius: '99px',
-                background: GOLD_LT,
-                color: GOLD,
-                fontWeight: 500,
-              }"
-            >
-              {{ d.cat }}
-            </span>
+            <span class="badge badge-gold">{{ d.category }}</span>
           </div>
           <div
             :style="{
@@ -137,10 +98,14 @@ const filtered = computed(() =>
               whiteSpace: open === i ? 'normal' : 'nowrap',
             }"
           >
-            {{ d.def }}
+            {{ d.description }}
           </div>
         </div>
       </div>
+
+      <p v-if="!loading" :style="{ fontSize: '11px', color: MUTED, textAlign: 'center', marginTop: '12px' }">
+        총 {{ filtered.length }}개 용어
+      </p>
     </div>
   </div>
 </template>

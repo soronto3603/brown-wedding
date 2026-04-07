@@ -4,17 +4,32 @@
   padding: 0;
 }
 
-/* WEDDiC 브랜드 — CSS 변수 (전역·미디어쿼리에서 참조 가능) */
+/* WEDDiC 브랜드 — CSS 변수 (리뉴얼 v2) */
 :root {
+  /* 포인트: 코랄/피치 — CTA·액티브·뱃지에만 */
   --weddic-primary: #f2728a;
   --weddic-primary-mid: #e85c78;
   --weddic-primary-dark: #c9325a;
   --weddic-primary-lt: #fff0f3;
   --weddic-primary-soft: #ffd6e0;
   --weddic-dark: #2a1520;
+
+  /* 배경: 화이트/웜그레이 기반 */
+  --weddic-bg: #ffffff;
+  --weddic-bg-section: #fafaf8;
+
+  /* 텍스트 위계 */
   --weddic-text: #1a1a1a;
-  --weddic-muted: #9b9b9b;
-  --weddic-border: #ffd6e0;
+  --weddic-text-secondary: #666666;
+  --weddic-muted: #999999;
+
+  /* 구분선·보더 — 뉴트럴 */
+  --weddic-border: #eeeeee;
+
+  /* 카드 */
+  --weddic-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --weddic-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --weddic-card-radius: 12px;
 }
 
 html,
@@ -36,8 +51,192 @@ textarea {
 }
 
 body {
-  background: var(--weddic-primary-lt);
+  background: var(--weddic-bg);
   color: var(--weddic-text);
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 타이포그래피 ── */
+.text-heading {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--weddic-text);
+}
+
+.text-subheading {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--weddic-text);
+}
+
+.text-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--weddic-text);
+}
+
+.text-caption {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--weddic-muted);
+}
+
+.text-label {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--weddic-text-secondary);
+}
+
+/* ── 카드 ── */
+.card {
+  background: #fff;
+  border: 1px solid var(--weddic-border);
+  border-radius: var(--weddic-card-radius);
+  box-shadow: var(--weddic-card-shadow);
+}
+
+.card:hover {
+  box-shadow: var(--weddic-card-shadow-hover);
+}
+
+/* ── 필터 필(pill) 버튼 ── */
+.pill {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--weddic-border);
+  background: #fff;
+  color: var(--weddic-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill.active {
+  font-weight: 600;
+  border-color: var(--weddic-primary);
+  background: var(--weddic-primary);
+  color: #fff;
+}
+
+.pill:hover:not(.active) {
+  border-color: var(--weddic-primary-soft);
+  color: var(--weddic-text-secondary);
+}
+
+/* ── CTA 버튼 ── */
+.btn-primary {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 22px;
+  background: var(--weddic-primary);
+  color: #fff;
+  border: none;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--weddic-primary-mid);
+}
+
+/* ── 페이지 래퍼 ── */
+.page-wrap {
+  background: var(--weddic-bg-section);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.page-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ── 뱃지/태그 ── */
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.badge-gold {
+  background: #fbf6ec;
+  color: #c4a059;
+}
+
+.badge-primary {
+  background: var(--weddic-primary-lt);
+  color: var(--weddic-primary);
+}
+
+.badge-success {
+  background: #edf7ee;
+  color: #3b8a47;
+}
+
+/* ── 탭 바 ── */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--weddic-border);
+  margin-bottom: 14px;
+}
+
+.tab-item {
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--weddic-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.tab-item.active {
+  font-weight: 600;
+  color: var(--weddic-text);
+  border-bottom-color: var(--weddic-primary);
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--weddic-muted);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--weddic-text-secondary);
+  margin-bottom: 6px;
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--weddic-muted);
 }
 
 ::-webkit-scrollbar {
