@@ -3,7 +3,6 @@ const props = defineProps<{
   label: string
   options: string[]
   modelValue: string
-  icon?: string
 }>()
 
 const emit = defineEmits<{
@@ -48,7 +47,6 @@ const displayLabel = computed(() =>
 <template>
   <div class="chip-wrap">
     <button ref="btnRef" :class="['chip-btn', { active: isActive, open }]" @click="toggle">
-      <span v-if="icon" class="chip-icon">{{ icon }}</span>
       <span class="chip-label">{{ displayLabel }}</span>
       <svg class="chip-chevron" :class="{ rotated: open }" width="10" height="6" viewBox="0 0 10 6">
         <path d="M0 0l5 6 5-6z" fill="currentColor" />
@@ -83,25 +81,23 @@ const displayLabel = computed(() =>
 .chip-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 13px;
-  border: 1.5px solid #e0e0e0;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
   border-radius: 99px;
   background: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   font-family: inherit;
-  color: #333;
+  color: #555;
   cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.chip-btn:hover { border-color: #ccc; background: #fafafa; }
+.chip-btn:hover { border-color: #bbb; background: #f8f8f8; }
 .chip-btn.active { border-color: #F2728A; background: #FFF0F3; color: #F2728A; }
 .chip-btn.open { border-color: #bbb; }
 
-.chip-icon { font-size: 12px; }
 .chip-chevron { flex-shrink: 0; transition: transform 0.2s; opacity: 0.5; }
 .chip-chevron.rotated { transform: rotate(180deg); }
 

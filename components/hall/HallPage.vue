@@ -160,95 +160,23 @@ onUnmounted(() => {
       overflow: 'hidden',
     }"
   >
-    <!-- 상단: 1행 검색 / 2행 필터 — 좁은 패널(Simple Browser)에서 한 줄 배치 시 필터가 가로 스크롤 밖으로 밀려 안 보이는 문제 방지 -->
-    <div
-      :style="{
-        flexShrink: 0,
-        padding: '8px 12px',
-        borderBottom: `1px solid ${BORDER}`,
-        background: '#fff',
-        position: 'relative',
-        zIndex: 10001,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          minHeight: '40px',
-        }"
-      >
-        <div
-          :style="{
-            flex: 1,
-            minWidth: 0,
-            maxWidth: '480px',
-            display: 'flex',
-            alignItems: 'center',
-            border: `1px solid ${BORDER}`,
-            borderRadius: '99px',
-            padding: '0 12px',
-            gap: '6px',
-            background: '#FAFAFA',
-          }"
-        >
-          <span :style="{ fontSize: '13px', color: MUTED, flexShrink: 0 }">🔍</span>
-          <input
-            v-model="q"
-            placeholder="웨딩홀 이름, 지역 검색..."
-            :style="{
-              flex: 1,
-              minWidth: 0,
-              border: 'none',
-              outline: 'none',
-              fontSize: '13px',
-              background: 'transparent',
-              color: TEXT,
-              padding: '7px 0',
-            }"
-          />
-        </div>
-        <div
-          :style="{
-            width: '34px',
-            height: '34px',
-            borderRadius: '50%',
-            background: PRIMARY,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '15px',
-            color: '#fff',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }"
-        >
-          👤
-        </div>
+    <!-- 상단: 검색 + 필터 한 줄 -->
+    <div class="top-bar">
+      <!-- 검색 -->
+      <div class="search-box">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="6" cy="6" r="4.5" stroke="#aaa" stroke-width="1.5" />
+          <path d="M9.5 9.5L12.5 12.5" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <input v-model="q" class="search-input" placeholder="웨딩홀 이름, 지역 검색..." />
       </div>
-      <div class="filter-row">
-        <HallFilterChip
-          v-model="hallTypeF"
-          label="분위기"
-          icon="✦"
-          :options="HALL_TYPE_OPTIONS"
-        />
-        <HallFilterChip
-          v-model="foodF"
-          label="식대"
-          icon="🍽"
-          :options="FOOD_OPTIONS"
-        />
-        <HallFilterChip
-          v-model="guestF"
-          label="보증인원"
-          icon="👥"
-          :options="GUEST_OPTIONS"
-        />
+      <!-- 필터 구분선 -->
+      <div class="filter-divider" />
+      <!-- 필터 칩 -->
+      <div class="filter-chips">
+        <HallFilterChip v-model="hallTypeF" label="홀 유형" :options="HALL_TYPE_OPTIONS" />
+        <HallFilterChip v-model="foodF" label="식대" :options="FOOD_OPTIONS" />
+        <HallFilterChip v-model="guestF" label="보증인원" :options="GUEST_OPTIONS" />
       </div>
     </div>
 
@@ -271,15 +199,58 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.filter-row {
+/* 검색 + 필터 한 줄 바 */
+.top-bar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
+  gap: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid v-bind('BORDER');
+  background: #fff;
+  position: relative;
+  z-index: 10001;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+}
+.search-icon { flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: v-bind('TEXT');
+  background: transparent;
+  padding: 8px 0;
+}
+.search-input::placeholder { color: #bbb; }
+
+.filter-divider {
+  width: 1px;
+  height: 20px;
+  background: v-bind('BORDER');
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.filter-row::-webkit-scrollbar { display: none; }
+.filter-chips::-webkit-scrollbar { display: none; }
 
 .hall-main-row {
   position: relative;
