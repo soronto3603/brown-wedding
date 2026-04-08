@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { Hall } from '~/data/wedding'
-import {
-  HALLS,
-  hallMatchesFoodRange,
-  hallMatchesGuestRange,
-} from '~/data/wedding'
+import { HALLS } from '~/data/wedding'
 import type { BwHallRow } from '~/utils/bwHallMapper'
 import { bwRowToHall } from '~/utils/bwHallMapper'
 
@@ -12,11 +8,15 @@ const { PRIMARY, TEXT, MUTED, BORDER } = useThemeColors()
 const config = useRuntimeConfig()
 const supabase = useSupabaseClient()
 
-const moodF = ref('전체')
+const hallTypeF = ref('전체')
 const foodF = ref('전체')
-const minF = ref('전체')
+const guestF = ref('전체')
 const q = ref('')
 const selected = ref<Hall | null>(null)
+
+const HALL_TYPE_OPTIONS = ['전체', '웨딩홀', '호텔', '컨벤션', '교회', '대학', '채플', '한옥', '전통', '복합', '야외']
+const FOOD_OPTIONS = ['전체', '5만원 이하', '5-7만원', '7-10만원', '10만원 이상']
+const GUEST_OPTIONS = ['전체', '20-50명', '51-100명', '101-200명', '201-300명', '300명 이상']
 
 /**
  * `undefined`: Supabase로 아직 대체하지 않음 → 데모 `HALLS` 사용.
@@ -29,28 +29,6 @@ const remoteHallsLoadedOnce = ref(false)
 
 let debounceBounds: ReturnType<typeof setTimeout> | null = null
 
-const selStyle = computed(() => ({
-  fontFamily: 'inherit',
-  fontSize: '13px',
-  fontWeight: 500,
-  padding: '6px 28px 6px 12px',
-  border: `1px solid ${BORDER}`,
-  borderRadius: '99px',
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239B9B9B'/%3E%3C/svg%3E\")",
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 10px center',
-  backgroundSize: '10px 6px',
-  backgroundColor: '#fff',
-  appearance: 'none',
-  WebkitAppearance: 'none',
-  color: TEXT,
-  cursor: 'pointer',
-  outline: 'none',
-  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  flexShrink: 0,
-  minWidth: '96px',
-}))
 
 const baseHalls = computed(() =>
   mapHalls.value !== undefined ? mapHalls.value : HALLS,
@@ -59,9 +37,31 @@ const baseHalls = computed(() =>
 const filtered = computed(() => {
   const qq = q.value.trim().toLowerCase()
   return baseHalls.value.filter((h) => {
-    if (moodF.value !== '전체' && h.mood !== moodF.value) return false
-    if (!hallMatchesFoodRange(h, foodF.value)) return false
-    if (!hallMatchesGuestRange(h, minF.value)) return false
+    // 홀 유형 필터
+    if (hallTypeF.value !== '전체') {
+      const types = h.hallTypes ?? h.tags ?? []
+      if (!types.some((t: string) => t.includes(hallTypeF.value) || hallTypeF.value.includes(t))) return false
+    }
+    // 식대 필터 (foodMin/foodMax 단위: 만원)
+    if (foodF.value !== '전체') {
+      const fMin = h.foodMin ?? 0
+      const fMax = h.foodMax ?? fMin
+      if (foodF.value === '5만원 이하' && fMax > 5) return false
+      if (foodF.value === '5-7만원' && (fMax < 5 || fMin > 7)) return false
+      if (foodF.value === '7-10만원' && (fMax < 7 || fMin > 10)) return false
+      if (foodF.value === '10만원 이상' && fMin < 10) return false
+    }
+    // 보증인원 필터
+    if (guestF.value !== '전체') {
+      const cap = h.minPpl ?? h.maxPpl ?? 0
+      const capMax = h.maxPpl ?? cap
+      if (guestF.value === '20-50명' && capMax > 50) return false
+      if (guestF.value === '51-100명' && (capMax < 51 || cap > 100)) return false
+      if (guestF.value === '101-200명' && (capMax < 101 || cap > 200)) return false
+      if (guestF.value === '201-300명' && (capMax < 201 || cap > 300)) return false
+      if (guestF.value === '300명 이상' && capMax < 300) return false
+    }
+    // 검색어
     if (qq) {
       const name = h.name.toLowerCase()
       const loc = h.location.toLowerCase()
@@ -167,7 +167,8 @@ onUnmounted(() => {
         padding: '8px 12px',
         borderBottom: `1px solid ${BORDER}`,
         background: '#fff',
-        zIndex: 5,
+        position: 'relative',
+        zIndex: 10001,
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -229,32 +230,25 @@ onUnmounted(() => {
           👤
         </div>
       </div>
-      <div
-        :style="{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flexWrap: 'wrap',
-        }"
-      >
-        <select v-model="moodF" :style="selStyle">
-          <option>전체</option>
-          <option>럭셔리</option>
-          <option>모던</option>
-          <option>클래식</option>
-        </select>
-        <select v-model="foodF" :style="selStyle">
-          <option>전체</option>
-          <option>~6만원</option>
-          <option>6~9만원</option>
-          <option>9만원~</option>
-        </select>
-        <select v-model="minF" :style="selStyle">
-          <option>전체</option>
-          <option>~100명</option>
-          <option>100~200명</option>
-          <option>200명~</option>
-        </select>
+      <div class="filter-row">
+        <HallFilterChip
+          v-model="hallTypeF"
+          label="분위기"
+          icon="✦"
+          :options="HALL_TYPE_OPTIONS"
+        />
+        <HallFilterChip
+          v-model="foodF"
+          label="식대"
+          icon="🍽"
+          :options="FOOD_OPTIONS"
+        />
+        <HallFilterChip
+          v-model="guestF"
+          label="보증인원"
+          icon="👥"
+          :options="GUEST_OPTIONS"
+        />
       </div>
     </div>
 
@@ -277,6 +271,16 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+
 .hall-main-row {
   position: relative;
 }
