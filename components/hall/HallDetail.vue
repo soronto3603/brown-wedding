@@ -8,22 +8,15 @@ import {
 } from '~/composables/useHallDetail'
 import {
   formatManwonRange,
-  labelsFromSourceLink,
-  sourceTypeLabel,
-  displayUrlHost,
+  sourceBadgeText,
 } from '~/utils/hallDetail'
 
-const { PRIMARY, PRIMARY_SOFT, TEXT, MUTED, BORDER } = useThemeColors()
+const { PRIMARY, TEXT, MUTED, BORDER } = useThemeColors()
 const { openAuthModal } = useAuthModal()
 const user = useSupabaseUser()
 
-const props = defineProps<{
-  hall: Hall
-}>()
-
-defineEmits<{
-  back: []
-}>()
+const props = defineProps<{ hall: Hall }>()
+defineEmits<{ back: [] }>()
 
 const { fetchHallDetail, fetchRegionAvgFoodMid } = useHallDetail()
 const { bookmarkedIds, myHallIds, toggleBookmark } = useBookmark()
@@ -31,24 +24,14 @@ const { bookmarkedIds, myHallIds, toggleBookmark } = useBookmark()
 const detail = ref<HallDetailRow | null>(null)
 const loadError = ref<string | null>(null)
 const regionAvgMid = ref<number | null>(null)
+const activeRoomTab = ref(0)
 
 const isUuid = computed(() => typeof props.hall.id === 'string')
 
-const activeRoomTab = ref(0)
-
 async function loadDetail() {
-  if (!isUuid.value) {
-    detail.value = null
-    regionAvgMid.value = null
-    loadError.value = null
-    return
-  }
+  if (!isUuid.value) { detail.value = null; regionAvgMid.value = null; loadError.value = null; return }
   const { hall, error } = await fetchHallDetail(props.hall.id as string)
-  if (error) {
-    loadError.value = error.message
-    detail.value = null
-    return
-  }
+  if (error) { loadError.value = error.message; detail.value = null; return }
   loadError.value = null
   detail.value = hall
   activeRoomTab.value = 0
@@ -59,24 +42,11 @@ async function loadDetail() {
   }
 }
 
-watch(
-  () => props.hall.id,
-  () => {
-    loadDetail()
-  },
-  { immediate: true },
-)
+watch(() => props.hall.id, () => loadDetail(), { immediate: true })
 
-const addressLine = computed(() => {
-  const a = detail.value?.address?.trim()
-  if (a) return a
-  return props.hall.location?.trim() || ''
-})
-
+const addressLine = computed(() => detail.value?.address?.trim() || props.hall.location?.trim() || '')
 const foodWon = computed(() => resolveFoodWonRange(props.hall, detail.value))
-const foodManwonLabel = computed(() =>
-  formatManwonRange(foodWon.value.min, foodWon.value.max),
-)
+const foodManwonLabel = computed(() => formatManwonRange(foodWon.value.min, foodWon.value.max))
 
 const foodMidWon = computed(() => {
   const { min, max } = foodWon.value
@@ -84,12 +54,20 @@ const foodMidWon = computed(() => {
   return ((min ?? 0) + (max ?? 0)) / 2
 })
 
+const regionAvgManwon = computed(() =>
+  regionAvgMid.value ? Math.round(regionAvgMid.value / 10000 * 10) / 10 : null
+)
+
 const diffPct = computed(() => {
-  if (foodMidWon.value == null || regionAvgMid.value == null) return null
-  if (regionAvgMid.value === 0) return null
-  return Math.round(
-    ((foodMidWon.value - regionAvgMid.value) / regionAvgMid.value) * 100,
-  )
+  if (foodMidWon.value == null || regionAvgMid.value == null || regionAvgMid.value === 0) return null
+  return Math.round(((foodMidWon.value - regionAvgMid.value) / regionAvgMid.value) * 100)
+})
+
+const diffText = computed(() => {
+  if (diffPct.value == null || regionAvgManwon.value == null) return null
+  const region = detail.value?.region_district?.replace(/\d.*/, '').trim() || detail.value?.region_city || ''
+  const dir = diffPct.value < 0 ? '저렴' : '높음'
+  return `${region} 평균 ${regionAvgManwon.value}만원보다 약 ${Math.abs(diffPct.value)}% ${dir}`
 })
 
 const guarantee = computed(() => resolveGuaranteeRange(props.hall, detail.value))
@@ -103,706 +81,598 @@ const guaranteeLabel = computed(() => {
 
 const rooms = computed(() => detail.value?.bw_hall_rooms ?? [])
 const currentRoom = computed(() => rooms.value[activeRoomTab.value] ?? null)
-
 const costs = computed(() => detail.value?.bw_hall_costs ?? [])
 const dinings = computed(() => detail.value?.bw_hall_dinings ?? [])
 const sources = computed(() => detail.value?.bw_hall_sources ?? [])
 
-function sourceBadgeCount(link: string | null | undefined): number {
-  return labelsFromSourceLink(link).length
+// 태그: DB hall_type 또는 hall.tags 사용
+const displayTags = computed(() => {
+  const types = detail.value?.hall_type ?? props.hall.hallTypes ?? props.hall.tags ?? []
+  return types.slice(0, 5)
+})
+
+// 소스 배지 헬퍼
+function badge(link: string | null | undefined) {
+  return sourceBadgeText(link, sources.value.length)
 }
 
 const isBookmarked = computed(() =>
-  typeof props.hall.id === 'string' ? bookmarkedIds.value.has(props.hall.id) : false,
+  typeof props.hall.id === 'string' ? bookmarkedIds.value.has(props.hall.id) : false
 )
 const isMyHall = computed(() =>
-  typeof props.hall.id === 'string' ? myHallIds.value.has(props.hall.id) : false,
+  typeof props.hall.id === 'string' ? myHallIds.value.has(props.hall.id) : false
 )
-
 function onBookmarkClick() {
-  if (!user.value) {
-    openAuthModal()
-    return
-  }
-  if (typeof props.hall.id === 'string') {
-    toggleBookmark(props.hall.id, 'wishlist')
-  }
+  if (!user.value) { openAuthModal(); return }
+  if (typeof props.hall.id === 'string') toggleBookmark(props.hall.id, 'wishlist')
 }
-
 function onMyHallClick() {
-  if (!user.value) {
-    openAuthModal()
-    return
-  }
-  if (typeof props.hall.id === 'string') {
-    toggleBookmark(props.hall.id, 'my_hall')
-  }
+  if (!user.value) { openAuthModal(); return }
+  if (typeof props.hall.id === 'string') toggleBookmark(props.hall.id, 'my_hall')
 }
 
-const showEstimate = computed(
-  () =>
-    Boolean(foodManwonLabel.value) ||
-    diffPct.value != null ||
-    Boolean(guaranteeLabel.value),
+const showEstimate = computed(() =>
+  Boolean(foodManwonLabel.value) || diffPct.value != null || Boolean(guaranteeLabel.value)
 )
-
-const showRoomSection = computed(() => {
-  if (rooms.value.length > 0) return true
-  const dc = detail.value?.detail_content?.trim()
-  return Boolean(dc)
-})
-
-const showDiningSection = computed(() => {
-  if (dinings.value.length > 0) return true
-  const ft = detail.value?.food_type?.[0] ?? props.hall.food
-  return Boolean(ft?.trim())
-})
-
-const showTransportSection = computed(() => {
+const showRoomCard = computed(() => rooms.value.length > 0)
+const showDiningCard = computed(() => dinings.value.length > 0 || Boolean(detail.value?.food_type?.[0] || props.hall.food))
+const showTransport = computed(() => {
   const d = detail.value
   if (!d && !isUuid.value) return false
-  return Boolean(
-    d?.total_parking != null ||
-      d?.free_parking_min != null ||
-      (d?.parking_info && d.parking_info.trim()) ||
-      (d?.transport && d.transport.trim()) ||
-      d?.has_shuttle === true ||
-      (d?.elevator_info && d.elevator_info.trim()) ||
-      (d?.atm_location && d.atm_location.trim()),
-  )
+  return Boolean(d?.total_parking != null || d?.parking_info?.trim() || d?.transport?.trim() || d?.free_parking_min != null)
 })
-
-const showCostSection = computed(() => costs.value.length > 0)
-
-const showContractSection = computed(() =>
-  costs.value.some(
-    (c) =>
-      (c.contract_info && c.contract_info.trim()) ||
-      (c.external_corp && c.external_corp.trim()),
-  ),
-)
-
-const showSourcesSection = computed(() => sources.value.length > 0)
+const showCostDetail = computed(() => costs.value.some(c => c.meal_cost_text?.trim() || c.rental_cost_text?.trim() || c.add_cost?.trim()))
+const showRoomDetail = computed(() => rooms.value.some(r => r.feature?.trim() || r.mood?.trim()))
+const showDiningDetail = computed(() => dinings.value.some(d => d.menu_info?.trim() || d.family_room?.trim()))
+const showContractDetail = computed(() => costs.value.some(c => c.contract_info?.trim() || c.external_corp?.trim() || c.add_cost?.trim()))
 </script>
 
 <template>
-  <div
-    :style="{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflowY: 'auto',
-    }"
-  >
-    <!-- 헤더 -->
-    <div
-      :style="{
-        padding: '10px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        fontSize: '13px',
-        color: PRIMARY,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }"
-    >
-      <span :style="{ cursor: 'pointer' }" @click="$emit('back')">← 목록으로</span>
-      <div :style="{ display: 'flex', gap: '12px', alignItems: 'center' }">
-        <span
-          :style="{ fontSize: '18px', cursor: 'pointer', color: isBookmarked ? '#E05B5B' : MUTED, transition: 'color 0.15s' }"
+  <div class="detail-wrap">
+    <!-- ← 목록으로 / ♡ ★ -->
+    <div class="detail-nav">
+      <span class="back-btn" @click="$emit('back')">← 목록으로</span>
+      <div class="action-icons">
+        <button
+          class="icon-btn"
+          :class="{ active: isBookmarked }"
           title="관심홀"
           @click="onBookmarkClick"
-          >{{ isBookmarked ? '♥' : '♡' }}</span
         >
-        <span
-          :style="{ fontSize: '18px', cursor: 'pointer', color: isMyHall ? '#C4A059' : MUTED, transition: 'color 0.15s' }"
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21C12 21 3 14.5 3 8.5C3 5.42 5.42 3 8.5 3C10.24 3 11.91 3.81 13 5.09C14.09 3.81 15.76 3 17.5 3C20.58 3 23 5.42 23 8.5C23 14.5 12 21 12 21Z" :fill="isBookmarked ? '#F2728A' : 'none'" :stroke="isBookmarked ? '#F2728A' : '#ccc'" stroke-width="1.8"/>
+          </svg>
+        </button>
+        <button
+          class="icon-btn"
+          :class="{ active: isMyHall }"
           title="나의홀"
           @click="onMyHallClick"
-          >{{ isMyHall ? '★' : '☆' }}</span
         >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" :fill="isMyHall ? '#C4A059' : 'none'" :stroke="isMyHall ? '#C4A059' : '#ccc'" stroke-width="1.8"/>
+          </svg>
+        </button>
       </div>
     </div>
 
-    <p
-      v-if="loadError"
-      :style="{ padding: '8px 16px', fontSize: '12px', color: '#c00', margin: 0 }"
-    >
-      상세 정보를 불러오지 못했습니다. {{ loadError }}
-    </p>
+    <p v-if="loadError" class="load-error">상세 정보를 불러오지 못했습니다. {{ loadError }}</p>
 
     <!-- 기본 정보 -->
-    <div
-      :style="{
-        padding: '16px 16px 12px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          marginBottom: '6px',
-        }"
-      >
-        <div>
-          <div :style="{ fontSize: '20px', fontWeight: 700, color: TEXT, marginBottom: '4px' }">
-            {{ detail?.name ?? hall.name }}
-          </div>
-          <div :style="{ fontSize: '12px', color: MUTED }">
-            {{ addressLine || '주소 정보 없음' }}
-          </div>
-        </div>
-      </div>
-      <div
-        v-if="(detail?.phone ?? hall.phone) && (detail?.phone ?? hall.phone) !== '문의'"
-        :style="{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }"
-      >
-        <span :style="{ fontSize: '12px', color: PRIMARY }"
-          >📞 {{ detail?.phone ?? hall.phone }}</span
-        >
+    <div class="section info-section">
+      <h1 class="hall-name">{{ detail?.name ?? hall.name }}</h1>
+      <p class="hall-addr">{{ addressLine || '주소 정보 없음' }}</p>
+      <div class="info-meta">
+        <span v-if="(detail?.phone ?? hall.phone)" class="meta-phone">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="#F2728A"/></svg>
+          {{ detail?.phone ?? hall.phone }}
+        </span>
         <a
           v-if="detail?.website_url?.trim()"
           :href="detail.website_url"
           target="_blank"
           rel="noopener noreferrer"
-          :style="{ fontSize: '12px', color: MUTED }"
-          >🌐 홈페이지</a
+          class="meta-web"
         >
-        <span
-          :style="{
-            fontSize: '11px',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            border: `1px solid ${BORDER}`,
-            color: MUTED,
-          }"
-        >
-          {{ detail?.is_verified ? '업체인증' : '업체인증전' }}
-        </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#888" stroke-width="1.8"/><path d="M2 12h20M12 2C7 7 7 17 12 22M12 2C17 7 17 17 12 22" stroke="#888" stroke-width="1.8" fill="none"/></svg>
+          홈페이지
+        </a>
+        <span class="meta-badge">{{ detail?.is_verified ? '업체인증' : '업체인증전' }}</span>
       </div>
-      <div v-else :style="{ marginBottom: '8px' }">
-        <a
-          v-if="detail?.website_url?.trim()"
-          :href="detail!.website_url!"
-          target="_blank"
-          rel="noopener noreferrer"
-          :style="{ fontSize: '12px', color: MUTED }"
-          >🌐 홈페이지</a
-        >
-        <span
-          :style="{
-            fontSize: '11px',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            border: `1px solid ${BORDER}`,
-            color: MUTED,
-            marginLeft: '8px',
-          }"
-        >
-          {{ detail?.is_verified ? '업체인증' : '업체인증전' }}
-        </span>
-      </div>
-      <button
-        type="button"
-        :style="{
-          width: '100%',
-          padding: '10px 0',
-          background: PRIMARY,
-          color: '#fff',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-        }"
-      >
-        <span>💬</span> 예비부부 대기실 이동
+      <button class="cta-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white" opacity="0.9"/></svg>
+        예비부부 대기실 이동
       </button>
     </div>
 
     <!-- 예상 견적 -->
-    <div
-      v-if="showEstimate"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }">≡ 예상 견적</span>
-        <span
-          v-if="costs[0]?.source_link && sourceBadgeCount(costs[0].source_link) > 0"
-          :style="{ fontSize: '11px', color: PRIMARY }"
-        >
-          {{
-            labelsFromSourceLink(costs[0].source_link)[0]
-          }}
-          +{{ Math.max(0, sourceBadgeCount(costs[0].source_link) - 1) }}
-        </span>
+    <div v-if="showEstimate" class="section">
+      <div class="section-header">
+        <span class="section-title">≡ 예상 견적</span>
+        <span v-if="badge(costs[0]?.source_link)" class="source-badge">{{ badge(costs[0]?.source_link) }}</span>
       </div>
 
-      <div
-        v-if="foodManwonLabel"
-        :style="{
-          background: '#FAFBFF',
-          borderRadius: '8px',
-          padding: '12px 14px',
-          marginBottom: '8px',
-        }"
-      >
-        <div :style="{ fontSize: '11px', color: MUTED, marginBottom: '4px' }">식대 (1인)</div>
-        <div :style="{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }">
-          <div>
-            <div :style="{ fontSize: '22px', fontWeight: 700, color: TEXT }">
-              {{ foodManwonLabel }}
-            </div>
-            <div
-              v-if="diffPct != null"
-              :style="{ fontSize: '11px', color: MUTED, marginTop: '2px' }"
-            >
-              지역 평균 대비 약 {{ Math.abs(diffPct) }}%
-              {{ diffPct < 0 ? '저렴' : '비쌈' }}
-            </div>
-          </div>
-          <svg width="70" height="38" viewBox="0 0 70 38" aria-hidden="true">
-            <path
-              d="M5,32 C15,32 20,8 35,6 C50,4 55,32 65,32"
-              :stroke="PRIMARY"
-              stroke-width="2"
-              fill="none"
-              stroke-linecap="round"
-            />
-            <line
-              x1="35"
-              y1="6"
-              x2="35"
-              y2="34"
-              :stroke="PRIMARY"
-              stroke-width="1"
-              stroke-dasharray="2,2"
-            />
-            <circle cx="35" cy="34" r="3" :fill="PRIMARY" />
-          </svg>
+      <div v-if="foodManwonLabel" class="estimate-card">
+        <div class="estimate-left">
+          <div class="estimate-sub">식대 (1인)</div>
+          <div class="estimate-price">{{ foodManwonLabel }}</div>
+          <div v-if="diffText" class="estimate-diff">{{ diffText }}</div>
         </div>
+        <svg class="bell-curve" width="72" height="40" viewBox="0 0 72 40" aria-hidden="true">
+          <path d="M4,34 C14,34 20,8 36,6 C52,4 58,34 68,34" :stroke="PRIMARY" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <line x1="36" y1="6" x2="36" y2="36" :stroke="PRIMARY" stroke-width="1" stroke-dasharray="2,2"/>
+          <circle cx="36" cy="36" r="3" :fill="PRIMARY"/>
+        </svg>
       </div>
 
-      <div
-        v-if="guaranteeLabel"
-        :style="{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }"
-      >
-        <span :style="{ fontSize: '13px', color: TEXT }">보증인원</span>
-        <span :style="{ fontSize: '14px', fontWeight: 600, color: PRIMARY }">{{
-          guaranteeLabel
-        }}</span>
+      <div v-if="guaranteeLabel" class="guarantee-row">
+        <span class="guarantee-label">보증인원</span>
+        <span class="guarantee-value">{{ guaranteeLabel }}</span>
       </div>
     </div>
 
-    <!-- 홀 컨디션 -->
-    <div
-      v-if="showRoomSection"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }">🏛 홀 컨디션</span>
-        <span
-          v-if="currentRoom?.source_link && sourceBadgeCount(currentRoom.source_link) > 0"
-          :style="{ fontSize: '11px', color: PRIMARY }"
-        >
-          {{ labelsFromSourceLink(currentRoom.source_link)[0] }} +{{
-            Math.max(0, sourceBadgeCount(currentRoom.source_link) - 1)
-          }}
-        </span>
+    <!-- 홀 컨디션 카드 -->
+    <div v-if="showRoomCard" class="section">
+      <div class="section-header">
+        <span class="section-title">🏛 홀 컨디션</span>
+        <span v-if="badge(currentRoom?.source_link)" class="source-badge">{{ badge(currentRoom?.source_link) }}</span>
       </div>
 
-      <div
-        v-if="rooms.length > 1"
-        :style="{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }"
-      >
+      <!-- 탭 (복수 홀) -->
+      <div v-if="rooms.length > 1" class="room-tabs">
         <button
           v-for="(r, idx) in rooms"
           :key="idx"
+          :class="['room-tab', { active: activeRoomTab === idx }]"
           type="button"
-          :style="{
-            fontSize: '11px',
-            padding: '4px 10px',
-            borderRadius: '99px',
-            border: `1px solid ${BORDER}`,
-            background: activeRoomTab === idx ? PRIMARY_SOFT : '#fff',
-            color: activeRoomTab === idx ? PRIMARY : MUTED,
-            cursor: 'pointer',
-          }"
           @click="activeRoomTab = idx"
-        >
-          {{ r.name || `홀 ${idx + 1}` }}
-        </button>
+        >{{ r.name || `홀 ${idx + 1}` }}</button>
       </div>
 
       <template v-if="currentRoom">
-        <div
-          v-if="currentRoom.name?.trim()"
-          :style="{ fontSize: '15px', fontWeight: 600, color: TEXT, marginBottom: '6px' }"
-        >
-          {{ currentRoom.name }}
+        <!-- 홀명 + 이용시간 -->
+        <div v-if="currentRoom.name" class="room-name-row">
+          <span class="room-name">{{ currentRoom.name }}</span>
+          <span v-if="currentRoom.interval_text" class="room-duration">{{ currentRoom.interval_text }}</span>
         </div>
-        <div
-          v-if="currentRoom.feature?.trim() || detail?.detail_content?.trim()"
-          :style="{ fontSize: '13px', color: '#555', lineHeight: 1.7, marginBottom: '8px' }"
-        >
-          {{ currentRoom.feature?.trim() || detail?.detail_content }}
-        </div>
-        <div
-          v-if="currentRoom.mood?.trim()"
-          :style="{ fontSize: '12px', color: MUTED, marginBottom: '6px' }"
-        >
-          분위기: {{ currentRoom.mood }}
-        </div>
-        <div
-          v-if="currentRoom.bride_room?.trim()"
-          :style="{ fontSize: '12px', color: PRIMARY, lineHeight: 1.6, marginBottom: '8px' }"
-        >
-          {{ currentRoom.bride_room }}
-        </div>
-      </template>
-      <template v-else-if="detail?.detail_content?.trim()">
-        <div :style="{ fontSize: '13px', color: '#555', lineHeight: 1.7 }">
-          {{ detail.detail_content }}
-        </div>
-      </template>
 
-      <div
-        v-if="(detail?.tags?.length ?? hall.tags?.length)"
-        :style="{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }"
-      >
-        <span
-          v-for="t in detail?.tags ?? hall.tags"
-          :key="t"
-          :style="{
-            fontSize: '11px',
-            padding: '3px 10px',
-            borderRadius: '99px',
-            background: '#F0F2FF',
-            color: PRIMARY,
-            fontWeight: 500,
-          }"
-        >
-          #{{ t }}
-        </span>
-      </div>
+        <!-- 태그 (홀 유형) -->
+        <div v-if="displayTags.length" class="tag-row">
+          <span v-for="t in displayTags" :key="t" class="hall-tag">{{ t }}</span>
+        </div>
+
+        <!-- 분위기 / feature 텍스트 -->
+        <p v-if="currentRoom.mood?.trim()" class="room-desc">{{ currentRoom.mood }}</p>
+        <p v-if="currentRoom.feature?.trim()" class="room-desc">{{ currentRoom.feature }}</p>
+
+        <!-- 신부대기실 -->
+        <p v-if="currentRoom.bride_room?.trim()" class="room-bride">{{ currentRoom.bride_room }}</p>
+      </template>
     </div>
 
-    <!-- 식사 및 평가 -->
-    <div
-      v-if="showDiningSection"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }">🍽️ 식사 및 평가</span>
-        <span
-          v-if="dinings[0]?.source_link && sourceBadgeCount(dinings[0].source_link) > 0"
-          :style="{ fontSize: '11px', color: PRIMARY }"
-        >
-          {{ labelsFromSourceLink(dinings[0].source_link)[0] }} +{{
-            Math.max(0, sourceBadgeCount(dinings[0].source_link) - 1)
-          }}
-        </span>
+    <!-- 식사 및 평가 카드 -->
+    <div v-if="showDiningCard" class="section">
+      <div class="section-header">
+        <span class="section-title">🍽 식사 및 평가</span>
+        <span v-if="badge(dinings[0]?.source_link)" class="source-badge">{{ badge(dinings[0]?.source_link) }}</span>
       </div>
 
-      <div
-        v-for="(d, di) in dinings.length ? dinings : [null]"
-        :key="di"
-        :style="{ marginBottom: dinings.length > 1 ? '14px' : '0' }"
-      >
-        <div
-          v-if="d?.food_type?.trim() || (!d && (detail?.food_type?.[0] || hall.food))"
-          :style="{ fontSize: '14px', fontWeight: 600, color: TEXT, marginBottom: '6px' }"
-        >
+      <template v-for="(d, di) in dinings.length ? dinings : [null]" :key="di">
+        <div v-if="d?.food_type?.trim() || (!d && (detail?.food_type?.[0] || hall.food))" class="dining-type">
           {{ d?.food_type?.trim() || detail?.food_type?.[0] || hall.food }}
         </div>
-        <div
-          v-if="d?.menu_info?.trim()"
-          :style="{ fontSize: '13px', color: '#555', lineHeight: 1.7, marginBottom: '6px' }"
-        >
-          {{ d.menu_info }}
+        <p v-if="d?.menu_info?.trim()" class="dining-menu">{{ d.menu_info }}</p>
+        <div v-if="d?.family_room?.trim()" class="dining-family">혼주 식사룸: {{ d.family_room }}</div>
+
+        <!-- 맛 평가 pros/cons -->
+        <div v-if="d?.taste_pros?.trim() || d?.taste_cons?.trim()" class="taste-card">
+          <div v-if="d?.taste_pros?.trim()" class="taste-row pros">
+            <span class="taste-sign">+</span>
+            <span>{{ d.taste_pros }}</span>
+          </div>
+          <div v-if="d?.taste_cons?.trim()" class="taste-row cons">
+            <span class="taste-sign">−</span>
+            <span>{{ d.taste_cons }}</span>
+          </div>
         </div>
-        <div
-          v-if="d?.family_room?.trim()"
-          :style="{ fontSize: '12px', color: MUTED, marginBottom: '4px' }"
-        >
-          혼주 식사룸: {{ d.family_room }}
-        </div>
-        <div
-          v-if="d?.review_score != null"
-          :style="{ fontSize: '12px', color: TEXT, marginBottom: '4px' }"
-        >
-          별점 {{ d.review_score }}
-        </div>
-        <div
-          v-if="d?.taste_pros?.trim() || d?.taste_cons?.trim()"
-          :style="{
-            fontSize: '12px',
-            color: '#555',
-            lineHeight: 1.6,
-            padding: '8px 10px',
-            background: '#FAFBFF',
-            borderRadius: '8px',
-            border: `1px solid ${BORDER}`,
-          }"
-        >
-          <template v-if="d?.taste_pros?.trim()">+ {{ d.taste_pros }}</template>
-          <template v-if="d?.taste_pros?.trim() && d?.taste_cons?.trim()"><br /></template>
-          <template v-if="d?.taste_cons?.trim()">− {{ d.taste_cons }}</template>
-        </div>
-      </div>
+      </template>
     </div>
 
     <!-- 교통 및 주차 -->
-    <div
-      v-if="showTransportSection"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }">🚗 교통 및 주차</span>
+    <div v-if="showTransport" class="section">
+      <div class="section-header">
+        <span class="section-title">🚗 교통 및 주차</span>
       </div>
-      <div :style="{ display: 'flex', gap: '10px', flexWrap: 'wrap' }">
-        <div
-          :style="{
-            flex: '1 1 140px',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            border: `1px solid ${BORDER}`,
-            background: '#FAFBFF',
-          }"
-        >
-          <div :style="{ fontSize: '12px', fontWeight: 600, color: TEXT, marginBottom: '4px' }">
+      <div class="transport-grid">
+        <div class="transport-card">
+          <div class="transport-card-title">
             주차
-            <template v-if="detail?.total_parking != null"> ({{ detail.total_parking }}대)</template>
+            <template v-if="detail?.total_parking"> ({{ detail.total_parking }}대)</template>
           </div>
-          <div v-if="detail?.free_parking_min != null" :style="{ fontSize: '12px', color: MUTED }">
-            {{ detail.free_parking_min }}분 무료
+          <div v-if="detail?.free_parking_min != null" class="transport-card-body">
+            {{ detail.free_parking_min }}분 무료 주차
           </div>
-          <div
-            v-if="detail?.parking_info?.trim()"
-            :style="{ fontSize: '12px', color: '#555', lineHeight: 1.6, marginTop: '4px' }"
-          >
-            {{ detail.parking_info }}
-          </div>
+          <div v-if="detail?.parking_info?.trim()" class="transport-card-body">{{ detail.parking_info }}</div>
+          <div v-if="!detail?.free_parking_min && !detail?.parking_info" class="transport-card-body muted">—</div>
         </div>
-        <div
-          :style="{
-            flex: '1 1 140px',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            border: `1px solid ${BORDER}`,
-            background: '#FAFBFF',
-          }"
-        >
-          <div :style="{ fontSize: '12px', fontWeight: 600, color: TEXT, marginBottom: '4px' }">
-            대중교통 · 기타
-          </div>
-          <div
-            v-if="detail?.transport?.trim()"
-            :style="{ fontSize: '12px', color: '#555', lineHeight: 1.6 }"
-          >
-            {{ detail.transport }}
-          </div>
-          <div v-if="detail?.has_shuttle === true" :style="{ fontSize: '12px', color: MUTED, marginTop: '4px' }">
-            셔틀 운행
-          </div>
-          <div
-            v-if="detail?.elevator_info?.trim()"
-            :style="{ fontSize: '12px', color: '#555', marginTop: '4px' }"
-          >
-            엘리베이터: {{ detail.elevator_info }}
-          </div>
-          <div v-if="detail?.atm_location?.trim()" :style="{ fontSize: '12px', color: MUTED, marginTop: '4px' }">
-            ATM: {{ detail.atm_location }}
-          </div>
+        <div class="transport-card">
+          <div class="transport-card-title">대중교통</div>
+          <div v-if="detail?.transport?.trim()" class="transport-card-body">{{ detail.transport }}</div>
+          <div v-if="detail?.has_shuttle" class="transport-card-body">셔틀 운행</div>
+          <div v-if="!detail?.transport && !detail?.has_shuttle" class="transport-card-body muted">—</div>
         </div>
+      </div>
+      <div v-if="detail?.atm_location?.trim()" class="transport-extra">ATM: {{ detail.atm_location }}</div>
+      <div v-if="detail?.elevator_info?.trim()" class="transport-extra">엘리베이터: {{ detail.elevator_info }}</div>
+    </div>
+
+    <!-- 비용 정보 텍스트 -->
+    <div v-if="showCostDetail" class="section">
+      <div class="section-header">
+        <span class="section-title">비용 정보 (식대·보증인원·대관료)</span>
+        <span v-if="badge(costs[0]?.source_link)" class="source-badge">{{ badge(costs[0]?.source_link) }}</span>
+      </div>
+      <div v-for="(c, ci) in costs" :key="ci" class="cost-block">
+        <div v-if="c.target_date?.trim()" class="cost-date">{{ c.target_date }}</div>
+        <p v-if="c.meal_cost_text?.trim()" class="cost-text">{{ c.meal_cost_text }}</p>
+        <p v-if="c.guarantee_text?.trim()" class="cost-text">{{ c.guarantee_text }}</p>
+        <p v-if="c.rental_cost_text?.trim()" class="cost-text">{{ c.rental_cost_text }}</p>
       </div>
     </div>
 
-    <!-- 비용 정보 -->
-    <div
-      v-if="showCostSection"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }"
-          >비용 정보 (식대·보증·대관료)</span
-        >
-        <span
-          v-if="costs[0]?.source_link && sourceBadgeCount(costs[0].source_link) > 0"
-          :style="{ fontSize: '11px', color: PRIMARY }"
-        >
-          {{ labelsFromSourceLink(costs[0].source_link)[0] }} +{{
-            Math.max(0, sourceBadgeCount(costs[0].source_link) - 1)
-          }}
-        </span>
+    <!-- 홀 컨디션 상세 (구조·스타일·버진로드·층고) -->
+    <div v-if="showRoomDetail" class="section">
+      <div class="section-header">
+        <span class="section-title">홀 컨디션 (홀 구조·스타일·버진로드·층고)</span>
+        <span v-if="badge(currentRoom?.source_link)" class="source-badge">{{ badge(currentRoom?.source_link) }}</span>
       </div>
-      <div v-for="(c, ci) in costs" :key="ci" :style="{ marginBottom: '12px' }">
-        <div v-if="c.target_date?.trim()" :style="{ fontSize: '11px', color: MUTED, marginBottom: '4px' }">
-          기준: {{ c.target_date }}
-        </div>
-        <div v-if="c.meal_cost_text?.trim()" :style="{ fontSize: '13px', color: '#555', marginBottom: '4px' }">
-          식대: {{ c.meal_cost_text }}
-        </div>
-        <div
-          v-if="c.guarantee_text?.trim()"
-          :style="{ fontSize: '13px', color: '#555', marginBottom: '4px' }"
-        >
-          보증: {{ c.guarantee_text }}
-        </div>
-        <div v-if="c.rental_cost_text?.trim()" :style="{ fontSize: '13px', color: '#555', marginBottom: '4px' }">
-          대관료: {{ c.rental_cost_text }}
-          <template
-            v-if="c.rental_cost_min != null || c.rental_cost_max != null"
-          >
-            ({{ formatManwonRange(c.rental_cost_min, c.rental_cost_max) }})
-          </template>
-        </div>
-        <div v-else-if="c.rental_cost_min != null || c.rental_cost_max != null" :style="{ fontSize: '13px', color: '#555' }">
-          대관료: {{ formatManwonRange(c.rental_cost_min, c.rental_cost_max) }}
-        </div>
-        <div v-if="c.add_cost?.trim()" :style="{ fontSize: '12px', color: MUTED, marginTop: '4px' }">
-          추가 비용: {{ c.add_cost }}
-        </div>
+      <template v-for="(r, ri) in rooms" :key="ri">
+        <p v-if="r.feature?.trim()" class="cost-text">{{ r.feature }}</p>
+        <p v-if="r.mood?.trim() && r.mood !== currentRoom?.mood" class="cost-text">{{ r.mood }}</p>
+      </template>
+    </div>
+
+    <!-- 식사 유형 상세 -->
+    <div v-if="showDiningDetail" class="section">
+      <div class="section-header">
+        <span class="section-title">식사 유형 (뷔페/코스, 연회장, 맛 평가, 혼주 식사룸)</span>
+        <span v-if="badge(dinings[0]?.source_link)" class="source-badge">{{ badge(dinings[0]?.source_link) }}</span>
       </div>
+      <template v-for="(d, di) in dinings" :key="di">
+        <p v-if="d.menu_info?.trim()" class="cost-text">{{ d.menu_info }}</p>
+        <p v-if="d.family_room?.trim()" class="cost-text">혼주 식사룸: {{ d.family_room }}</p>
+      </template>
     </div>
 
     <!-- 계약 정보 -->
-    <div
-      v-if="showContractSection"
-      :style="{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-      }"
-    >
-      <div
-        :style="{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }"
-      >
-        <span :style="{ fontSize: '13px', fontWeight: 600, color: TEXT }">계약 정보</span>
+    <div v-if="showContractDetail" class="section">
+      <div class="section-header">
+        <span class="section-title">계약 정보 (추가 비용·위약금·외부업체)</span>
       </div>
       <div v-for="(c, ci) in costs" :key="'ct-' + ci">
-        <div
-          v-if="c.contract_info?.trim()"
-          :style="{ fontSize: '13px', color: '#555', lineHeight: 1.7, marginBottom: '8px' }"
-        >
-          {{ c.contract_info }}
-        </div>
-        <div v-if="c.external_corp?.trim()" :style="{ fontSize: '12px', color: MUTED }">
-          외부업체: {{ c.external_corp }}
-        </div>
+        <p v-if="c.add_cost?.trim()" class="cost-text">{{ c.add_cost }}</p>
+        <p v-if="c.contract_info?.trim()" class="cost-text">{{ c.contract_info }}</p>
+        <p v-if="c.external_corp?.trim()" class="cost-text">외부업체: {{ c.external_corp }}</p>
       </div>
     </div>
 
-    <!-- 면책 -->
-    <div
-      :style="{
-        padding: '12px 16px',
-        borderBottom: `1px solid ${BORDER}`,
-        background: '#FFF8F9',
-        flexShrink: 0,
-      }"
-    >
-      <div :style="{ fontSize: '12px', color: MUTED, lineHeight: 1.6 }">
-        💡 수집된 정보에 실수가 있을 수 있어요. 방문 전 상세 조건을 다시 확인해 주세요.
-      </div>
+    <!-- 면책 disclaimer -->
+    <div class="disclaimer-card">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px">
+        <circle cx="12" cy="12" r="10" fill="#FFC107" opacity="0.8"/>
+        <path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p class="disclaimer-text">수집된 정보에 실수가 있을 수 있어요. 소중한 날인 만큼, 방문 전 상세 조건을 다시 한번 체크해 주세요.</p>
     </div>
 
-    <!-- 출처 링크 -->
-    <div v-if="showSourcesSection" :style="{ padding: '14px 16px', flexShrink: 0 }">
-      <div :style="{ fontSize: '13px', fontWeight: 600, color: TEXT, marginBottom: '10px' }">
-        출처 링크
+    <p class="footer-text">
+      본 정보는 예비 신랑신부님의 결혼 준비 시 편의를 돕고자 웨딩홀 공식 사이트, 포털, 온라인 후기를 기반으로 재구성되었습니다.
+    </p>
+
+    <!-- AD 배너 -->
+    <div class="ad-banner">
+      <div class="ad-label">AD</div>
+      <div class="ad-content">
+        <div class="ad-sub">전국 1등% 웨딩홀 가격비교!</div>
+        <div class="ad-title">우리의 첫 시작,<br><strong>가뜬씩으 로안성!</strong></div>
       </div>
-      <a
-        v-for="(s, si) in sources"
-        :key="s.id ?? s.url + si"
-        :href="s.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        :style="{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '8px',
-          padding: '8px 0',
-          borderBottom: si < sources.length - 1 ? `1px solid ${BORDER}` : 'none',
-          textDecoration: 'none',
-          color: TEXT,
-        }"
-      >
-        <span :style="{ fontSize: '11px', color: PRIMARY, flexShrink: 0, minWidth: '88px' }">{{
-          sourceTypeLabel(s.source_type)
-        }}</span>
-        <span :style="{ fontSize: '13px', flex: 1, lineHeight: 1.4 }">{{
-          s.title?.trim() || displayUrlHost(s.url)
-        }}</span>
-        <span :style="{ color: MUTED, flexShrink: 0 }">↗</span>
-      </a>
     </div>
   </div>
 </template>
+
+<style scoped>
+.detail-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+}
+
+/* 네비 */
+.detail-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid v-bind('BORDER');
+  flex-shrink: 0;
+}
+.back-btn {
+  font-size: 13px;
+  color: v-bind('PRIMARY');
+  cursor: pointer;
+  font-weight: 500;
+}
+.action-icons { display: flex; gap: 6px; }
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* 섹션 공통 */
+.section {
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid v-bind('BORDER');
+  flex-shrink: 0;
+}
+
+/* 섹션 헤더 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: v-bind('TEXT');
+}
+.source-badge {
+  font-size: 11px;
+  color: v-bind('PRIMARY');
+  font-weight: 500;
+}
+
+/* 기본 정보 */
+.info-section { padding-bottom: 16px; }
+.hall-name {
+  font-size: 21px;
+  font-weight: 700;
+  color: v-bind('TEXT');
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.hall-addr {
+  font-size: 12px;
+  color: v-bind('MUTED');
+  margin: 0 0 10px;
+}
+.info-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.meta-phone {
+  font-size: 12px;
+  color: v-bind('PRIMARY');
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.meta-web {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+.meta-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid v-bind('BORDER');
+  border-radius: 4px;
+  color: v-bind('MUTED');
+}
+.cta-btn {
+  width: 100%;
+  padding: 12px 0;
+  background: v-bind('PRIMARY');
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+
+/* 예상 견적 */
+.estimate-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  background: #F8F9FF;
+  border-radius: 10px;
+  padding: 14px 16px 12px;
+  margin-bottom: 8px;
+}
+.estimate-sub { font-size: 11px; color: v-bind('MUTED'); margin-bottom: 4px; }
+.estimate-price { font-size: 24px; font-weight: 700; color: v-bind('TEXT'); }
+.estimate-diff { font-size: 11px; color: v-bind('MUTED'); margin-top: 3px; }
+.bell-curve { flex-shrink: 0; }
+.guarantee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+.guarantee-label { font-size: 13px; color: v-bind('TEXT'); }
+.guarantee-value { font-size: 15px; font-weight: 700; color: v-bind('PRIMARY'); }
+
+/* 홀 컨디션 */
+.room-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.room-tab {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid v-bind('BORDER');
+  background: #fff;
+  color: v-bind('MUTED');
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.room-tab.active {
+  background: v-bind('PRIMARY');
+  border-color: v-bind('PRIMARY');
+  color: #fff;
+  font-weight: 600;
+}
+.room-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.room-name { font-size: 15px; font-weight: 700; color: v-bind('TEXT'); }
+.room-duration {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: #f0f0f0;
+  color: #777;
+  font-weight: 500;
+}
+.tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.hall-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: #333;
+  color: #fff;
+  font-weight: 500;
+}
+.room-desc {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+  margin: 0 0 6px;
+}
+.room-bride {
+  font-size: 12px;
+  color: v-bind('PRIMARY');
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+
+/* 식사 */
+.dining-type { font-size: 15px; font-weight: 700; color: v-bind('TEXT'); margin-bottom: 6px; }
+.dining-menu { font-size: 13px; color: #555; line-height: 1.7; margin: 0 0 6px; }
+.dining-family { font-size: 12px; color: v-bind('MUTED'); margin-bottom: 8px; }
+.taste-card {
+  background: #FAFBFF;
+  border: 1px solid v-bind('BORDER');
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.taste-row {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.taste-row + .taste-row { margin-top: 4px; }
+.taste-sign { font-weight: 700; flex-shrink: 0; }
+.taste-row.pros .taste-sign { color: #2E7D32; }
+.taste-row.cons .taste-sign { color: #C62828; }
+.taste-row.pros { color: #2E7D32; }
+.taste-row.cons { color: #C62828; }
+
+/* 교통 */
+.transport-grid { display: flex; gap: 10px; }
+.transport-card {
+  flex: 1 1 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid v-bind('BORDER');
+  background: #FAFBFF;
+}
+.transport-card-title { font-size: 12px; font-weight: 700; color: v-bind('TEXT'); margin-bottom: 4px; }
+.transport-card-body { font-size: 12px; color: #555; line-height: 1.6; margin-top: 2px; }
+.transport-card-body.muted { color: v-bind('MUTED'); }
+.transport-extra { font-size: 12px; color: v-bind('MUTED'); margin-top: 8px; }
+
+/* 텍스트 섹션 공통 */
+.cost-block { margin-bottom: 10px; }
+.cost-date { font-size: 11px; color: v-bind('MUTED'); margin-bottom: 4px; }
+.cost-text { font-size: 13px; color: #555; line-height: 1.7; margin: 0 0 4px; }
+
+/* 면책 */
+.load-error { padding: 8px 16px; font-size: 12px; color: #c00; margin: 0; }
+.disclaimer-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 16px 0;
+  padding: 14px 14px;
+  background: #FFFBF0;
+  border-radius: 12px;
+  border: 1px solid #FFE082;
+}
+.disclaimer-text {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.7;
+  margin: 0;
+}
+.footer-text {
+  font-size: 11px;
+  color: #bbb;
+  line-height: 1.7;
+  text-align: center;
+  padding: 12px 16px;
+  margin: 0;
+}
+
+/* AD 배너 */
+.ad-banner {
+  margin: 0 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FFB6C1 0%, #FF8FAB 100%);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.ad-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.ad-content { flex: 1; }
+.ad-sub { font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 2px; }
+.ad-title { font-size: 14px; color: #fff; line-height: 1.4; }
+.ad-title strong { font-weight: 800; }
+</style>

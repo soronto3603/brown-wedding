@@ -58,3 +58,29 @@ export function displayUrlHost(url: string): string {
     return url.slice(0, 40)
   }
 }
+
+/** source_link 문자열의 첫 번째 URL에서 짧은 식별자 추출 (naver 블로그 ID, 도메인 첫 세그먼트 등) */
+export function extractSourceLabel(sourceLink: string | null | undefined): string {
+  if (!sourceLink?.trim()) return ''
+  const firstUrl = sourceLink.split(/[\n\r\s]+/).find((s) => s.startsWith('http'))
+  if (!firstUrl) return ''
+  try {
+    const url = new URL(firstUrl)
+    if (url.hostname.includes('blog.naver.com')) {
+      return url.pathname.split('/').filter(Boolean)[0] ?? 'naver'
+    }
+    return url.hostname.replace(/^www\./, '').split('.')[0] ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** "label +N" 형태 배지 문자열 */
+export function sourceBadgeText(
+  sourceLink: string | null | undefined,
+  totalSourceCount: number,
+): string {
+  const label = extractSourceLabel(sourceLink)
+  if (!label) return totalSourceCount > 0 ? `출처 +${totalSourceCount}` : ''
+  return totalSourceCount > 1 ? `${label} +${totalSourceCount}` : label
+}
