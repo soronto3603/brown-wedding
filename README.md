@@ -1,57 +1,117 @@
-# brown-wedding
+# 딸깍웨딩 💒
 
-Nuxt 3 + Vue 3 + TypeScript 웨딩 준비 데모 UI.
+> 웨딩홀 정보 + 실제 후기를 한 번에 — 플래너, 손품, 발품 없이 딸깍 하나로 끝
 
-## 실행 방법
+**타깃** : 결혼 준비 예비부부 (2030)
+
+---
+
+## 웨딩시장 문제점
+
+| # | 문제 | 설명 |
+|---|---|---|
+| 1 | **정보 파편화** | 각 정보가 앱·플래너·블로그·카페에 흩어져 있음 |
+| 2 | **불투명한 견적** | 홀 견적·식대는 상담 전까지 비공개 |
+| 3 | **광고와 찐후기 구분 불가** | 체험단·협찬 후기가 넘쳐 신뢰할 수 있는 후기 찾기 어려움 |
+
+한국 웨딩 시장은 정보가 분산되어 있고 광고가 뒤섞여 신뢰할 수 있는 정보를 얻기 위해 예비부부가 수십 시간을 소비한다. 견적 하나 받으려면 전화해야 하고, 실제 후기 하나 찾으려면 블로그 수십 개를 뒤져야 한다.
+
+---
+
+## 서비스 구조
+
+| 메뉴 | 기능 |
+|---|---|
+| 🗺 홀 탐색 | 지역·홀타입·예산·하객수 필터 / 견적(대관료·식대·보증인원) / AI 후기 요약 / 3홀 비교 / 인원 슬라이더 실시간 견적 |
+| 📝 후기 | 블로그·카페·커뮤니티 AI 수집·분석 → 장점/단점/식대/진행 주제별 정리 + 출처 링크 / **전체 후기 · 하객 후기** 2탭 |
+| 💬 쀼광장 | 자유 커뮤니티 — 예비부부가 묻고 기혼자가 답하는 구조 |
+| ❤️ 찜 | 로그인 시 관심 홀 저장 |
+
+---
+
+## 레퍼런스
+
+| 서비스 | 포지션 |
+|---|---|
+| [아이웨딩](https://www.iwedding.co.kr) | 업계 1위 앱 |
+| [웨딩북](https://www.weddingbook.com) | 업계 2위 앱 |
+| [웨딕](https://www.weddic.com) | 신규 바이럴 서비스 |
+
+> 웨딕에 있는 기능들은 기본으로 커버하고, 그 위에 차별화 기능 추가
+
+---
+
+## 기술 스택
+
+- **Frontend** : Nuxt 3 + Vue 3 + TypeScript
+- **Backend / DB** : Supabase (PostgreSQL + Auth + Storage)
+- **지도** : 네이버 지도 API (Supercluster 클러스터링)
+
+---
+
+## 현재 구현 현황 (Phase 1 완료)
+
+| 기능 | 상태 |
+|---|---|
+| 홀 지도 (지역·타입·식대·인원 필터) | ✅ |
+| 홀 검색 드롭다운 → 상세 + 지도 이동 | ✅ |
+| 홀 상세 (견적·홀컨디션·식사·교통·비용) | ✅ |
+| 커뮤니티 대기실 | ✅ |
+| 우리예산 도구 | ✅ |
+| 용어사전 | ✅ |
+| 선곡기 | ✅ |
+| 찜/북마크 | ✅ |
+| 로그인 (Supabase Auth) | ✅ |
+| 어드민 패널 (홀·유저·배너·설정 관리) | ✅ |
+
+---
+
+## 개발 로드맵
+
+### Phase 2-A — 후기 탭 분리
+- 홀 상세에 **전체 후기 / 하객 후기** 2탭 추가
+- `bw_hall_sources` + `detail_content` 활용
+- 각 후기 항목에 원문 출처 링크
+
+### Phase 2-B — 3홀 비교
+- 홀 상세에서 "비교에 추가" 버튼 (최대 3슬롯)
+- 식대·보증인원·홀유형·주차 나란히 비교 표
+- 하객수 입력 → 예상 총 식대 계산
+
+### Phase 2-C — 인원 슬라이더 실시간 견적
+- 하객수 슬라이더 (50~1,000명)
+- 식대 × 하객수 = 예상 식대 총액 실시간 표시
+- 대관료 포함 시 예상 총견적
+
+### Phase 2-D — AI 후기 수집 파이프라인
+- Supabase Edge Function: 홀 ID → 네이버 블로그·카페 검색
+- Claude API로 장점/단점/식대/진행 분류·요약
+- 결과를 `bw_hall_sources`, `bw_hall_dinings` 에 저장
+
+### Phase 3 — 커뮤니티 강화
+- 닉네임 + 결혼연도 표시
+- 홀별 실시간 댓글
+- 예비부부 Q&A 구조 개선
+
+---
+
+## 로컬 실행
 
 ```bash
+# 의존성 설치
 npm install
+
+# 환경변수 설정 (.envrc.example 참고)
+cp .envrc.example .envrc
+# 아래 값 입력:
+# NUXT_PUBLIC_NAVER_MAP_CLIENT_ID=...
+# NUXT_PUBLIC_SUPABASE_URL=...
+# NUXT_PUBLIC_SUPABASE_ANON_KEY=...
+
+# 개발 서버 실행
 npm run dev
 ```
 
-브라우저에서 표시되는 로컬 URL(기본 http://localhost:3000)을 엽니다.
+---
 
-## 환경 변수
-
-- **로컬**: [direnv](https://direnv.net/) + `.envrc` (`.envrc.example` 복사 후 값 입력). `.envrc`는 git에 포함되지 않습니다.
-- **Vercel**: 프로젝트 Settings → Environment Variables에 **동일한 `NUXT_PUBLIC_*` 이름**으로 등록합니다.
-
-### 네이버 클라우드 Maps 문서 구분
-
-공식 [Maps 개요](https://api.ncloud-docs.com/docs/application-maps-overview)는 **REST API**(Static Map, Geocoding, Directions 등)를 다룹니다. 이런 호출은 `maps.apigw.ntruss.com` 으로 가며, 요청 헤더에 **Client ID**와 **Client Secret**이 함께 필요하고, **서버·백엔드**에서 쓰는 패턴입니다.
-
-이 프로젝트 **홀지도 화면**은 브라우저에 **Maps JavaScript API v3**(Dynamic Map / 웹용 스크립트)를 로드합니다. 스크립트 URL에는 **[Client ID만](https://navermaps.github.io/maps.js.ncp/docs/tutorial-2-Getting-Started.html)** 넣으며(`ncpKeyId`), **Client Secret은 프론트·`NUXT_PUBLIC_*`에 넣지 마세요.** 콘솔에서 Application 등록·API 선택·웹 서비스 URL 허용은 [Maps 개요](https://api.ncloud-docs.com/docs/application-maps-overview)와 연결된 **Maps 사용 가이드**, [Dynamic Map](https://api.ncloud-docs.com/docs/application-maps-dynamic)을 참고하면 됩니다. 개요 문서에 나온 **REST API 헤더 인증**(Client ID + Secret, `maps.apigw.ntruss.com` 호출)과 브라우저 **JS 스크립트 `ncpKeyId`** 는 용도가 다릅니다.
-
-`nuxt.config.ts`의 `runtimeConfig.public`과 대응하는 주요 변수:
-
-| 변수 | 설명 |
-|------|------|
-| `NUXT_PUBLIC_PROJECT_NAME` | 프로젝트 표시명 |
-| `NUXT_PUBLIC_NAVER_MAP_CLIENT_ID` | 네이버 지도(JS API) Client ID (NCP 콘솔 **Application 인증 정보**의 ID) |
-| `NUXT_PUBLIC_NAVER_MAP_LEGACY_CLIENT_ID` | `true`이면 스크립트에 `ncpClientId=` 사용 (구 방식 키만 쓸 때) |
-| `NUXT_PUBLIC_SUPABASE_URL` | Supabase Project URL |
-| `NUXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon(public) 키 |
-
-**네이버 지도 “Open API 인증 실패”** 시 확인:
-
-1. **값**: NCP 콘솔 → Application → **인증 정보**에 표시된 ID를 그대로 넣었는지 (공백·따옴표 없음).
-2. **콘솔 URL**: 같은 애플리케이션에서 **Maps API**가 켜져 있고, **웹 서비스 URL**에 `http://localhost:3000`(또는 실제 도메인)이 등록되어 있는지.
-3. **키 종류**: 신규 통합 콘솔 키는 `ncpKeyId`(기본). 예전 Open API 전용 키만 있으면 `.env`에 `NUXT_PUBLIC_NAVER_MAP_LEGACY_CLIENT_ID=true` 후 `npm run dev` 재시작.
-4. **반영**: `.env` / `.envrc` 수정 후 **개발 서버를 완전히 종료했다가 다시** `npm run dev` (Nuxt는 기동 시 `NUXT_PUBLIC_*`를 읽음).
-
-네이버 지도 키가 없으면 홀지도 탭은 목업 지도를 씁니다. Supabase URL은 대시보드의 실제 Project URL과 맞는지 확인하세요 (`https://<ref>.supabase.co`).
-
-### `ERR_PACKAGE_IMPORT_NOT_DEFINED` / `#internal/nuxt/paths`
-
-`.nuxt/dist/server/server.mjs`는 **직접 `node`로 실행하면 안 됩니다.** 개발은 항상 `npm run dev`, 프로덕션 로컬 확인은 `npm run build` 후 `npm run preview`(또는 `node .output/server/index.mjs`)만 사용하세요.
-
-캐시가 꼬였으면: `npm run clean` 또는 `nuxt cleanup` 후 다시 `npm run dev`.
-
-## 빌드
-
-```bash
-npm run build
-npm run preview
-```
-
-프리뷰는 Nitro 서버로 프로덕션 빌드를 띄웁니다.
+*본 서비스는 예비 신랑신부님의 결혼 준비 편의를 위해 웨딩홀 공식 사이트, 포털, 온라인 후기를 기반으로 정보를 재구성합니다.*
