@@ -1,7 +1,6 @@
 /**
- * WEDDiC 브랜드 컬러 — 리뉴얼 v2
+ * 딸깍웨딩 브랜드 컬러
  * 핑크는 CTA·액티브·뱃지에만 사용, 배경은 화이트/웜그레이 기반.
- * UI에서는 이 composable만 사용하고, 하드코딩된 HEX는 피합니다.
  */
 export function useThemeColors() {
   return {

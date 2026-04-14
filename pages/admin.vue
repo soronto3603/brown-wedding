@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'admin' })
+definePageMeta({ layout: false, middleware: 'admin' })
 
 const route = useRoute()
 
@@ -24,7 +24,7 @@ function isActive(path: string) {
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="admin-logo">
-        <NuxtLink to="/" class="admin-logo-back">← WEDDiC</NuxtLink>
+        <NuxtLink to="/" class="admin-logo-back">← 딸깍웨딩</NuxtLink>
         <div class="admin-logo-title">Admin</div>
       </div>
       <nav class="admin-nav">

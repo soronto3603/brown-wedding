@@ -400,4 +400,61 @@ function onMapBounds(b: { south: number; west: number; north: number; east: numb
 /* 드롭다운 트랜지션 */
 .search-drop-enter-active, .search-drop-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .search-drop-enter-from, .search-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* ── 모바일 ── */
+@media (max-width: 768px) {
+  .top-bar {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .search-wrap {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .search-box {
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 0 12px;
+  }
+
+  .search-input {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+
+  .filter-divider {
+    display: none;
+  }
+
+  .filter-chips {
+    order: 2;
+    flex: 1 1 100%;
+    gap: 8px;
+    padding: 2px 0;
+  }
+
+  .search-dropdown {
+    left: 8px !important;
+    right: 8px;
+    width: calc(100vw - 16px) !important;
+    max-height: 60vh;
+    border-radius: 12px;
+  }
+
+  .hall-aside-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 56px;
+    width: 100%;
+    max-width: 100%;
+    z-index: 10000;
+    border-right: none;
+    border-radius: 0;
+  }
+}
 </style>

@@ -122,14 +122,14 @@ async function onKakao() {
           <div class="auth-login-brand">
             <img
               class="auth-login-logo"
-              src="/weddic-icon.svg"
+              src="/app-icon.svg"
               width="48"
               height="48"
               alt=""
               aria-hidden="true"
             />
             <h2 id="auth-login-title" class="auth-login-title">
-              결혼 준비, 웨딩 백과사전 WEDDiC 🕊️
+              결혼 준비, 웨딩 백과사전 딸깍웨딩 🕊️
             </h2>
             <p class="auth-login-lead">
               웨딩 용어부터 예산·홀·BGM까지, 결혼 준비에 필요한 정보를 한곳에서

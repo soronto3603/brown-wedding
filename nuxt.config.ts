@@ -59,7 +59,7 @@ export default defineNuxtConfig({
       link: [
         {
           rel: 'icon',
-          href: '/weddic-icon.svg',
+          href: '/app-icon.svg',
           type: 'image/svg+xml',
         },
         {

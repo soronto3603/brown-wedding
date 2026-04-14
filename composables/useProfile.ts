@@ -33,20 +33,43 @@ export function useProfile() {
   })
 
   async function fetchProfile() {
-    if (!session.value?.user) return
+    const user = session.value?.user
+    if (!user) return
     loading.value = true
     error.value = null
 
     const { data, error: err } = await supabase
       .from('bw_profiles')
       .select('*, couple:bw_couples!fk_bw_profiles_couple(id, wedding_date)')
-      .eq('id', session.value.user.id)
-      .single()
+      .eq('id', user.id)
+      .maybeSingle()
 
     if (err) {
       error.value = err.message
-    } else {
+      loading.value = false
+      return
+    }
+
+    if (data) {
       profile.value = data as BwProfile
+    } else {
+      // Profile이 없으면 자동 생성 (OAuth 로그인 시 trigger 미동작 대비)
+      const meta = user.user_metadata ?? {}
+      const nickname = meta.name || meta.full_name || meta.preferred_username || '예비부부'
+      const avatarUrl = meta.avatar_url || meta.picture || null
+
+      await supabase
+        .from('bw_profiles')
+        .upsert({ id: user.id, nickname, avatar_url: avatarUrl }, { onConflict: 'id' })
+
+      // 재조회
+      const { data: created } = await supabase
+        .from('bw_profiles')
+        .select('*, couple:bw_couples!fk_bw_profiles_couple(id, wedding_date)')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (created) profile.value = created as BwProfile
     }
     loading.value = false
   }

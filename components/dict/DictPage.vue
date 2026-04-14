@@ -22,7 +22,7 @@ const filtered = computed(() => search(q.value, cat.value))
           background: '#fff',
           overflow: 'hidden',
           marginBottom: '12px',
-          boxShadow: 'var(--weddic-card-shadow)',
+          boxShadow: 'var(--w-card-shadow)',
         }"
       >
         <input

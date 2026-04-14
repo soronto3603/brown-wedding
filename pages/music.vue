@@ -1,0 +1,3 @@
+<template>
+  <MusicPage />
+</template>

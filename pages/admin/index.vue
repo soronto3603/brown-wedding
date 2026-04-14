@@ -70,7 +70,7 @@ function timeAgo(dateStr: string) {
   <div class="admin-page">
     <div class="admin-page-header">
       <h1>대시보드</h1>
-      <p>WEDDiC 서비스 현황</p>
+      <p>딸깍웨딩 서비스 현황</p>
     </div>
 
     <div v-if="loading" class="admin-loading">불러오는 중...</div>

@@ -204,16 +204,16 @@ const initials = computed(() => (profile.value?.nickname ?? '?').slice(0, 2))
   font-weight: 500;
   padding: 7px 20px;
   background: transparent;
-  color: var(--weddic-text-secondary);
-  border: 1px solid var(--weddic-border);
+  color: var(--w-text-secondary);
+  border: 1px solid var(--w-border);
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-outline:hover {
-  border-color: var(--weddic-primary);
-  color: var(--weddic-primary);
+  border-color: var(--w-primary);
+  color: var(--w-primary);
 }
 
 .profile-menu-item {
@@ -222,7 +222,7 @@ const initials = computed(() => (profile.value?.nickname ?? '?').slice(0, 2))
   align-items: center;
   padding: 13px 14px;
   font-size: 14px;
-  color: var(--weddic-text);
-  border-bottom: 1px solid var(--weddic-border);
+  color: var(--w-text);
+  border-bottom: 1px solid var(--w-border);
 }
 </style>

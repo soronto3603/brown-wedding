@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { isTabKey } from '~/data/wedding'
 
-definePageMeta({ ssr: false })
+definePageMeta({ layout: false, ssr: false })
 
 const route = useRoute()
 
 onMounted(async () => {
   const raw = route.query.tab
   const path =
-    typeof raw === 'string' && isTabKey(raw)
-      ? `/?tab=${encodeURIComponent(raw)}`
+    typeof raw === 'string' && isTabKey(raw) && raw !== 'hall'
+      ? `/${raw}`
       : '/'
   await navigateTo(path)
 })
